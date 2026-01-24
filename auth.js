@@ -5,35 +5,54 @@ async function initAuth() {
   const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // Verificar si ya hay sesión
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
-    // Usuario ya logueado
-    document.getElementById('auth-content').innerHTML = `
-      <p>Bienvenido, ${user.email}.</p>
-      <button onclick="window.location.href='predicciones.html'">Ver predicciones</button>
-      <br><br>
-      <button onclick="logout()">Cerrar sesión</button>
-    `;
-    window.logout = async () => {
-      await supabase.auth.signOut();
-      location.reload();
-    };
-    return;
+    // Usuario logueado: verificar si está aprobado
+    const { data, error } = await supabase
+      .from('users')
+      .select('is_approved')
+      .eq('id', user.id)
+      .single();
+
+    if (!error && data && data.is_approved) {
+      document.getElementById('auth-content').innerHTML = `
+        <p>Bienvenido.</p>
+        <button onclick="window.location.href='predicciones.html'">Ver predicciones</button>
+        <br><br>
+        <button onclick="logout()">Cerrar sesión</button>
+      `;
+      window.logout = async () => {
+        await supabase.auth.signOut();
+        location.reload();
+      };
+      return;
+    } else {
+      document.getElementById('auth-content').innerHTML = `
+        <p>Tu cuenta está pendiente de aprobación.</p>
+        <button onclick="logout()">Cerrar sesión</button>
+      `;
+      window.logout = async () => {
+        await supabase.auth.signOut();
+        location.reload();
+      };
+      return;
+    }
   }
 
-  // Mostrar formulario de registro/inicio de sesión
+  // Mostrar formulario de registro e inicio de sesión
   document.getElementById('auth-content').innerHTML = `
-    <div>
-      <h2>Regístrate</h2>
+    <div style="border:1px solid #ccc; padding:15px; margin-bottom:20px;">
+      <h2>¿Nuevo usuario?</h2>
       <input type="email" id="reg-email" placeholder="Email" /><br><br>
       <input type="password" id="reg-password" placeholder="Contraseña" /><br><br>
       <button onclick="registerUser()">Registrarse</button>
       <p id="reg-message"></p>
     </div>
-    <hr>
-    <div>
-      <h2>Inicia sesión</h2>
+
+    <div style="border:1px solid #ccc; padding:15px;">
+      <h2>¿Ya tienes cuenta?</h2>
       <input type="email" id="login-email" placeholder="Email" /><br><br>
       <input type="password" id="login-password" placeholder="Contraseña" /><br><br>
       <button onclick="loginUser()">Iniciar sesión</button>
@@ -71,7 +90,7 @@ async function initAuth() {
         });
 
       if (dbError) throw dbError;
-      msg.innerHTML = `<strong>¡Éxito!</strong><br>Tu código es: <code>${code}</code>`;
+      msg.innerHTML = `<strong>¡Éxito!</strong><br>Tu código es: <code>${code}</code><br>Muéstraselo al administrador.`;
     } catch (err) {
       msg.innerText = 'Error: ' + (err.message || err);
     }
@@ -92,7 +111,7 @@ async function initAuth() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      location.reload(); // Recargar para mostrar "Bienvenido"
+      location.reload(); // Recargar para mostrar estado
     } catch (err) {
       msg.innerText = 'Error: ' + (err.message || err);
     }
