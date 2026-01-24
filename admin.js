@@ -1,7 +1,7 @@
 const SUPABASE_URL = 'https://xxbkbttwzkmbiiuqrdlo.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod';
 
-// Tu User ID real (obligatorio para seguridad)
+// TU USER ID REAL (obligatorio)
 const ADMIN_USER_ID = 'd7409179-68b6-4304-9345-6d33608e22eb'; // ← ¡REEMPLAZA ESTO!
 
 async function initAdmin() {
@@ -11,7 +11,7 @@ async function initAdmin() {
   const {  { user } } = await supabase.auth.getUser();
 
   if (!user || user.id !== ADMIN_USER_ID) {
-    // Mostrar formulario de login SIN revelar que es admin
+    // Mostrar formulario de login
     document.getElementById('admin-content').innerHTML = `
       <p>Inicia sesión con tus credenciales de administrador.</p>
       <input type="email" id="admin-email" placeholder="Email" /><br><br>
