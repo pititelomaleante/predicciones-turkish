@@ -1,14 +1,14 @@
+// auth.js
 const SUPABASE_URL = 'https://xxbkbttwzkmbiiuqrdlo.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod';
 
-async function initAuth() {
-  const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Esperar a que supabase se cargue
+window.addEventListener('load', async () => {
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const {  { user } } = await supabase.auth.getUser();
 
   if (user) {
-    // Usuario ya logueado: verificar si está aprobado
     const { data, error } = await supabase
       .from('users')
       .select('is_approved')
@@ -40,7 +40,6 @@ async function initAuth() {
     }
   }
 
-  // Mostrar formulario de registro e inicio de sesión
   document.getElementById('auth-content').innerHTML = `
     <div style="border:1px solid #ccc; padding:15px; margin-bottom:20px;">
       <h2>¿Nuevo usuario?</h2>
@@ -59,7 +58,6 @@ async function initAuth() {
     </div>
   `;
 
-  // Registro
   window.registerUser = async () => {
     const email = document.getElementById('reg-email').value;
     const password = document.getElementById('reg-password').value;
@@ -89,13 +87,12 @@ async function initAuth() {
         });
 
       if (dbError) throw dbError;
-      msg.innerHTML = `<strong>¡Éxito!</strong><br>Tu código es: <code>${code}</code><br>Muéstraselo al administrador.`;
+      msg.innerHTML = `<strong>¡Éxito!</strong><br>Tu código es: <code>${code}</code>`;
     } catch (err) {
       msg.innerText = 'Error: ' + (err.message || err);
     }
   };
 
-  // Inicio de sesión
   window.loginUser = async () => {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
@@ -110,11 +107,9 @@ async function initAuth() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      location.reload(); // Recargar para mostrar estado
+      location.reload();
     } catch (err) {
       msg.innerText = 'Error: ' + (err.message || err);
     }
   };
-}
-
-initAuth();
+});
