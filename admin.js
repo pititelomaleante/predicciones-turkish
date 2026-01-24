@@ -2,7 +2,7 @@ const SUPABASE_URL = 'https://xxbkbttwzkmbiiuqrdlo.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod';
 
 // Tu User ID real (obligatorio para seguridad)
-const ADMIN_USER_ID = 'TU_USER_ID_AQUI'; // ← ¡REEMPLAZA ESTO!
+const ADMIN_USER_ID = 'd7409179-68b6-4304-9345-6d33608e22eb'; // ← ¡REEMPLAZA ESTO!
 
 async function initAdmin() {
   const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
