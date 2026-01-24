@@ -5,11 +5,10 @@ async function initAuth() {
   const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Verificar si ya hay sesión
-  const { data: { user } } = await supabase.auth.getUser();
+  const {  { user } } = await supabase.auth.getUser();
 
   if (user) {
-    // Usuario logueado: verificar si está aprobado
+    // Usuario ya logueado: verificar si está aprobado
     const { data, error } = await supabase
       .from('users')
       .select('is_approved')
