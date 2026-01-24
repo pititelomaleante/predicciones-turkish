@@ -1,6 +1,6 @@
 // Configuración de Supabase
-const SUPABASE_URL = 'https://xxbkbttwzkmbiiuqrdlo.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod';
+const SUPABASE_URL = https://xxbkbttwzkmbiiuqrdlo.supabase.co;
+const SUPABASE_ANON_KEY = sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod;
 
 // Cargar librería de Supabase dinámicamente (por si acaso)
 async function loadSupabase() {
