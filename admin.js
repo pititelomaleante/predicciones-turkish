@@ -1,72 +1,82 @@
 const SUPABASE_URL = 'https://xxbkbttwzkmbiiuqrdlo.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod';
 
-// 🔑 TU USER ID REAL (cámbialo por el tuyo)
-const ADMIN_USER_ID = 'd7409179-68b6-4304-9345-6d33608e22eb'; // ← ¡REEMPLAZA ESTO!
+// Tu User ID real (obligatorio para seguridad)
+const ADMIN_USER_ID = 'TU_USER_ID_AQUI'; // ← ¡REEMPLAZA ESTO!
 
 async function initAdmin() {
-  try {
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const { data: { user } } = await supabase.auth.getUser();
+  const {  { user } } = await supabase.auth.getUser();
 
-    // Solo tú (por User ID) puedes entrar
-    if (!user || user.id !== ADMIN_USER_ID) {
-      document.getElementById('admin-content').innerHTML = `
-        <p>Acceso restringido. Solo el administrador puede entrar.</p>
-        <button onclick="loginAsAdmin()">Iniciar sesión</button>
-      `;
-      window.loginAsAdmin = () => {
-        const email = prompt('Email:');
-        const password = prompt('Contraseña:');
-        supabase.auth.signInWithPassword({ email, password });
-      };
+  if (!user || user.id !== ADMIN_USER_ID) {
+    // Mostrar formulario de login SIN revelar que es admin
+    document.getElementById('admin-content').innerHTML = `
+      <p>Inicia sesión con tus credenciales de administrador.</p>
+      <input type="email" id="admin-email" placeholder="Email" /><br><br>
+      <input type="password" id="admin-password" placeholder="Contraseña" /><br><br>
+      <button onclick="loginAsAdmin()">Iniciar sesión</button>
+      <p id="admin-message"></p>
+    `;
+    window.loginAsAdmin = async () => {
+      const email = document.getElementById('admin-email').value;
+      const password = document.getElementById('admin-password').value;
+      const msg = document.getElementById('admin-message');
+
+      if (!email || !password) {
+        msg.innerText = 'Completa todos los campos.';
+        return;
+      }
+
+      msg.innerText = 'Verificando...';
+      try {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        location.reload(); // Recargar para verificar si es admin
+      } catch (err) {
+        msg.innerText = 'Acceso denegado.';
+      }
+    };
+    return;
+  }
+
+  // Si es el admin real, mostrar panel
+  document.getElementById('admin-content').innerHTML = `
+    <p>Panel de aprobación</p>
+    <input type="text" id="code" placeholder="Código único" maxlength="10" />
+    <button onclick="approveCode()">Aprobar</button>
+    <p id="result"></p>
+    <br>
+    <button onclick="logoutAdmin()">Cerrar sesión</button>
+  `;
+
+  window.approveCode = async () => {
+    const code = document.getElementById('code').value.trim();
+    const result = document.getElementById('result');
+    if (!code) {
+      result.innerText = 'Ingresa un código.';
       return;
     }
 
-    // Función para aprobar
-    window.approveCode = async (code) => {
-      if (!code.trim()) {
-        document.getElementById('result').innerText = 'Ingresa un código.';
-        return;
-      }
-      try {
-        const { error } = await supabase
-          .from('users')
-          .update({
-            is_approved: true,
-            approved_at: new Date().toISOString()
-          })
-          .eq('unique_code', code)
-          .eq('is_approved', false);
-        if (error) throw error;
-        document.getElementById('result').innerHTML = '<p style="color:green">✅ Aprobado.</p>';
-      } catch (err) {
-        document.getElementById('result').innerHTML = `<p style="color:red">❌ ${err.message}</p>`;
-      }
-    };
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ is_approved: true, approved_at: new Date().toISOString() })
+        .eq('unique_code', code)
+        .eq('is_approved', false);
 
-    document.getElementById('admin-content').innerHTML = `
-      <h2>Panel de Administrador</h2>
-      <p>Usuario: ${user.email}</p>
-      <hr>
-      <p>Ingresa el código único:</p>
-      <input type="text" id="code" placeholder="Ej: A3B9XK2M" maxlength="10" />
-      <button onclick="window.approveCode(document.getElementById('code').value)">Aprobar</button>
-      <div id="result"></div>
-      <br>
-      <button onclick="logout()">Cerrar sesión</button>
-    `;
-    window.logout = async () => {
-      await supabase.auth.signOut();
-      location.reload();
-    };
+      if (error) throw error;
+      result.innerHTML = '<p style="color:green">✅ Aprobado.</p>';
+    } catch (err) {
+      result.innerHTML = `<p style="color:red">❌ Error.</p>`;
+    }
+  };
 
-  } catch (err) {
-    document.getElementById('admin-content').innerHTML = 
-      `<p style="color:red">Error: ${err.message}</p>`;
-  }
+  window.logoutAdmin = async () => {
+    await supabase.auth.signOut();
+    location.reload();
+  };
 }
 
 initAdmin();
