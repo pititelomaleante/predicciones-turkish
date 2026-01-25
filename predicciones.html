@@ -1,79 +1,38 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Predicciones Deportivas</title>
-  <!-- Cargar Supabase desde CDN -->
+  <meta charset="utf-8">
+  <title>Predicciones</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-  <h1>Mis Predicciones Deportivas</h1>
-  <div id="predictions-content">Cargando...</div>
-
+  <h1>Mis Predicciones</h1>
+  <div id="p">Cargando...</div>
   <script>
-    // 🔑 Configuración
-    const SUPABASE_URL = 'https://xxbkbttwzkmbiiuqrdlo.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod';
-
-    // Iniciar cuando la página cargue
     document.addEventListener('DOMContentLoaded', async () => {
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-      try {
-        const {  { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-          document.getElementById('predictions-content').innerHTML = 
-            `<p>Debes iniciar sesión para ver predicciones. <a href="index.html">Regístrate o inicia sesión</a>.</p>`;
-          return;
-        }
-
-        // Verificar si está aprobado
-        const { data, error } = await supabase
-          .from('users')
-          .select('is_approved')
-          .eq('id', user.id)
-          .single();
-
-        if (error || !data || !data.is_approved) {
-          document.getElementById('predictions-content').innerHTML = 
-            `<p>Acceso no autorizado. Tu cuenta aún no ha sido aprobada por el administrador.</p>`;
-          return;
-        }
-
-        // Cargar predicciones
-        const {  matches } = await supabase
-          .from('matches')
-          .select('*')
-          .order('match_date', { ascending: false });
-
-        if (matches.length === 0) {
-          document.getElementById('predictions-content').innerHTML = 
-            `<p>No hay predicciones disponibles aún.</p>`;
-          return;
-        }
-
-        // Mostrar predicciones
-        let html = '<h2>Últimas predicciones</h2>';
-        matches.forEach(match => {
-          const date = new Date(match.match_date).toLocaleDateString('es-ES');
-          html += `
-            <div style="border: 1px solid #ccc; padding: 12px; margin: 12px 0; border-radius: 6px;">
-              <h3>${match.home_team} vs ${match.away_team} (${match.sport})</h3>
-              <p><strong>Fecha:</strong> ${date}</p>
-              <p><strong>Predicción:</strong> ${match.prediction}</p>
-              <p><strong>Razón:</strong> ${match.reason}</p>
-            </div>
-          `;
-        });
-
-        document.getElementById('predictions-content').innerHTML = html;
-
-      } catch (err) {
-        document.getElementById('predictions-content').innerHTML = 
-          `<p style="color:red;">Error al cargar predicciones: ${err.message}</p>`;
-      }
+      const supabase = window.supabase.createClient(
+        'https://xxbkbttwzkmbiiuqrdlo.supabase.co',
+        'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod'
+      );
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return document.getElementById('p').innerHTML = 'Inicia sesión.';
+      
+      const { data, error } = await supabase
+        .from('users')
+        .select('is_approved')
+        .eq('id', user.id)
+        .single();
+      
+      if (error || !data?.is_approved) return document.getElementById('p').innerHTML = 'Acceso denegado.';
+      
+      const {  matches } = await supabase.from('matches').select('*');
+      if (!matches?.length) return document.getElementById('p').innerHTML = 'No hay predicciones.';
+      
+      let h = '<h2>Predicciones</h2>';
+      matches.forEach(m => {
+        h += `<div>${m.home_team} vs ${m.away_team}<br>${m.prediction}</div><br>`;
+      });
+      document.getElementById('p').innerHTML = h;
     });
   </script>
 </body>
