@@ -5,34 +5,35 @@
   <title>Predicciones</title>
 </head>
 <body>
-  <h1>Predicciones Deportivas</h1>
+  <h1>Mis Predicciones</h1>
   <div id="p">Cargando...</div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    // Configuración
-   const SUPABASE_URL = 'https://xxbkbttwzkmbiiuqrdlo.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod';
+    const SUPABASE_URL = 'https://xxbkbttwzkmbiiuqrdlo.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod';
 
-    async function load() {
+    async function loadPredictions() {
       try {
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // Verificar usuario
-        const {  { user } } = await supabase.auth.getUser();
+        // Obtener usuario
+        const { data } = await supabase.auth.getUser();
+        const user = data.user;
+
         if (!user) {
           document.getElementById('p').innerHTML = '❌ No has iniciado sesión.';
           return;
         }
 
         // Verificar aprobación
-        const { data, error } = await supabase
+        const { data: userData, error } = await supabase
           .from('users')
           .select('is_approved')
           .eq('id', user.id)
           .single();
 
-        if (error || !data || !data.is_approved) {
+        if (error || !userData || !userData.is_approved) {
           document.getElementById('p').innerHTML = '❌ Acceso no autorizado.';
           return;
         }
@@ -46,7 +47,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod';
 
         let html = '<h2>Predicciones:</h2>';
         matches.forEach(m => {
-          html += `<p>${m.home_team} vs ${m.away_team} → ${m.prediction}</p>`;
+          html += `<p><strong>${m.home_team} vs ${m.away_team}</strong> → ${m.prediction}</p>`;
         });
         document.getElementById('p').innerHTML = html;
 
@@ -55,11 +56,10 @@ const SUPABASE_ANON_KEY = 'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod';
       }
     }
 
-    // Ejecutar cuando la página cargue
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', load);
+      document.addEventListener('DOMContentLoaded', loadPredictions);
     } else {
-      load();
+      loadPredictions();
     }
   </script>
 </body>
