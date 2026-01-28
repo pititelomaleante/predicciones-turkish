@@ -3,37 +3,64 @@
 <head>
   <meta charset="utf-8">
   <title>Predicciones</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-  <h1>Mis Predicciones</h1>
+  <h1>Predicciones Deportivas</h1>
   <div id="p">Cargando...</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const supabase = window.supabase.createClient(
-        'https://xxbkbttwzkmbiiuqrdlo.supabase.co',
-        'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod'
-      );
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return document.getElementById('p').innerHTML = 'Inicia sesión.';
-      
-      const { data, error } = await supabase
-        .from('users')
-        .select('is_approved')
-        .eq('id', user.id)
-        .single();
-      
-      if (error || !data?.is_approved) return document.getElementById('p').innerHTML = 'Acceso denegado.';
-      
-      const {  matches } = await supabase.from('matches').select('*');
-      if (!matches?.length) return document.getElementById('p').innerHTML = 'No hay predicciones.';
-      
-      let h = '<h2>Predicciones</h2>';
-      matches.forEach(m => {
-        h += `<div>${m.home_team} vs ${m.away_team}<br>${m.prediction}</div><br>`;
-      });
-      document.getElementById('p').innerHTML = h;
-    });
+    // Configuración
+    const SUPABASE_URL = 'https://xxbkbttwzkmbiiuqrdlo.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_YsH66sLWAARNM6gQ2P8lSw_Ngt2pCod';
+
+    async function load() {
+      try {
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Verificar usuario
+        const {  { user } } = await supabase.auth.getUser();
+        if (!user) {
+          document.getElementById('p').innerHTML = '❌ No has iniciado sesión.';
+          return;
+        }
+
+        // Verificar aprobación
+        const { data, error } = await supabase
+          .from('users')
+          .select('is_approved')
+          .eq('id', user.id)
+          .single();
+
+        if (error || !data || !data.is_approved) {
+          document.getElementById('p').innerHTML = '❌ Acceso no autorizado.';
+          return;
+        }
+
+        // Cargar predicciones
+        const {  matches } = await supabase.from('matches').select('*');
+        if (!matches || matches.length === 0) {
+          document.getElementById('p').innerHTML = '⚠️ No hay predicciones aún.';
+          return;
+        }
+
+        let html = '<h2>Predicciones:</h2>';
+        matches.forEach(m => {
+          html += `<p>${m.home_team} vs ${m.away_team} → ${m.prediction}</p>`;
+        });
+        document.getElementById('p').innerHTML = html;
+
+      } catch (err) {
+        document.getElementById('p').innerHTML = '💥 Error: ' + err.message;
+      }
+    }
+
+    // Ejecutar cuando la página cargue
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', load);
+    } else {
+      load();
+    }
   </script>
 </body>
 </html>
